@@ -8,9 +8,9 @@ type (
 	}
 
 	ClientResponse struct {
-		word        string   `json:"word"`
-		definitions []string `json:"definitions"`
-		examples    []string `json:"examples"`
+		Word        string   `json:"word"`
+		Definitions []string `json:"definitions"`
+		Examples    []string `json:"examples"`
 	}
 
 	WordDataModel struct {

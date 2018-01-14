@@ -8,11 +8,11 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
-// WithDataBase is an Adapter function
+// WithDatabase is an Adapter function
 // that extends the functionality of the
 // provided handler by adding a mongodb
 // session object to it.
-func WithDataBase(db *mgo.Session) adapter.HandlerAdapter {
+func WithDatabase(db *mgo.Session) adapter.HandlerAdapter {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			dbsession := db.Copy()

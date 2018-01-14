@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/context"
 )
 
+// Repository :
 type Repository struct {
 }
 
@@ -25,13 +26,13 @@ type Repository struct {
 // store the required fields in our
 // mongodb store and then send the response
 // to the client
-func (repo *Repository) GetWordData(w http.ResponseWriter, r *http.Request) []byte {
+func (repo *Repository) GetWordData(w http.ResponseWriter, r *http.Request) {
 
 	// get the request body
 	requestBody, requestBodyErr := ioutil.ReadAll(r.Body)
 	if requestBodyErr != nil {
 		log.Println(requestBodyErr)
-		return
+		w.Write([]byte(common.ClientErrMessage))
 	}
 
 	// unmarshal the request body
@@ -40,6 +41,7 @@ func (repo *Repository) GetWordData(w http.ResponseWriter, r *http.Request) []by
 	requestJSONErr := json.Unmarshal(requestBody, &requestedWord)
 	if requestJSONErr != nil {
 		log.Println(requestJSONErr)
+		w.Write([]byte(common.ClientErrMessage))
 	}
 
 	// get a mongodb session
@@ -50,7 +52,7 @@ func (repo *Repository) GetWordData(w http.ResponseWriter, r *http.Request) []by
 	// if the word exists
 	var findResult WordDataModel
 	var wordDataModel WordDataModel
-	mongoFindErr := c.Find(bson.M{"dictionaryentryresponse.results.id": requestedWord.Word}).One(&findResult)
+	mongoFindErr := c.Find(bson.M{"dictionaryEntryResponse.results.id": requestedWord.Word}).One(&findResult)
 	if mongoFindErr != nil {
 		// get the word data from oxford dictionary
 		wordDataModel.ID = bson.NewObjectId()
@@ -59,27 +61,30 @@ func (repo *Repository) GetWordData(w http.ResponseWriter, r *http.Request) []by
 		dictionaryModelJSONErr := json.Unmarshal(res, &wordDataModel.DictionaryEntryResponse)
 		if dictionaryModelJSONErr != nil {
 			log.Println(dictionaryModelJSONErr)
-		} else {
-			// save the response to mongodb
-			dbsession.DB(common.DBNAME).C(common.COLLECTION).Insert(wordDataModel)
-			// build your custom response to the client and send that
-			clientResponse, clientResponseErr := json.Marshal(buildClientResponse(wordDataModel))
-			if clientResponseErr != nil {
-				log.Println(clientResponseErr)
-				return []byte(common.ClientErrMessage)
-			} else {
-				return clientResponse
-			}
+			w.Write([]byte(common.ClientErrMessage))
+			return
 		}
-	} else {
-		// send the local mongodb data
-		clientResponse, clientResponseErr := json.Marshal(buildClientResponse(findResult))
+		// save the response to mongodb
+		dbsession.DB(common.DBNAME).C(common.COLLECTION).Insert(wordDataModel)
+		// build your custom response to the client and send that
+		builtResponse := buildClientResponse(wordDataModel)
+		clientResponse, clientResponseErr := json.Marshal(builtResponse)
 		if clientResponseErr != nil {
 			log.Println(clientResponseErr)
-			return []byte(common.ClientErrMessage)
-		} else {
-			return clientResponse
+			w.Write([]byte(common.ClientErrMessage))
+			return
 		}
+		w.Write(clientResponse)
+	} else {
+		// send the local mongodb data
+		builtResponse := buildClientResponse(findResult)
+		clientResponse, clientResponseErr := json.Marshal(builtResponse)
+		if clientResponseErr != nil {
+			log.Println(clientResponseErr)
+			w.Write([]byte(common.ClientErrMessage))
+			return
+		}
+		w.Write(clientResponse)
 	}
 }
 
@@ -87,7 +92,7 @@ func buildClientResponse(model WordDataModel) []ClientResponse {
 	var clientResponse []ClientResponse
 	for _, result := range model.DictionaryEntryResponse.Results {
 		var clientRes ClientResponse
-		clientRes.word = result.ID
+		clientRes.Word = result.ID
 
 		lexicalEntries := result.LexicalEntries
 		for _, lexicalEntry := range lexicalEntries {
@@ -101,18 +106,16 @@ func buildClientResponse(model WordDataModel) []ClientResponse {
 					definitions := sense.Definitions
 					examples := sense.Examples
 					for _, definition := range definitions {
-						clientRes.definitions = append(clientRes.definitions, definition)
+						clientRes.Definitions = append(clientRes.Definitions, definition)
 					}
 
 					for _, example := range examples {
-						clientRes.examples = append(clientRes.examples, example.Text)
+						clientRes.Examples = append(clientRes.Examples, example.Text)
 					}
 				}
 			}
 		}
-
 		clientResponse = append(clientResponse, clientRes)
 	}
-
 	return clientResponse
 }

@@ -35,4 +35,7 @@ const (
 	// ClientErrMessage is the generic error message
 	// for the client. Devs should check the log messages.
 	ClientErrMessage = "Oops! :( \nLooks like something went wrong."
+	// ClientSuccessMessage is the generic success message
+	// for the client.
+	ClientSuccessMessage = "Success :)"
 )
