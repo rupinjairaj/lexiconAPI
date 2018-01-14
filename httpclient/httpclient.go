@@ -1,11 +1,11 @@
 package httpclient
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
-	"lexiconAPI/constants"
+	"lexiconAPI/common"
 )
 
 // OxfordAPIClient is the generic http
@@ -16,24 +16,27 @@ type OxfordAPIClient struct {
 
 // Get :
 func (oxford OxfordAPIClient) Get(wordID string) []byte {
-	url := constants.BaseURL + constants.SourceLang + wordID
+	url := common.BaseURL + common.SourceLang + wordID
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+		return []byte(common.ClientErrMessage)
 	}
 
-	req.Header.Set(constants.AppIDHeader, constants.AppIDValue)
-	req.Header.Set(constants.AppKeyHeader, constants.AppKeyValue)
+	req.Header.Set(common.AppIDHeader, common.AppIDValue)
+	req.Header.Set(common.AppKeyHeader, common.AppKeyValue)
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+		return []byte(common.ClientErrMessage)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+		return []byte(common.ClientErrMessage)
 	}
 
 	return body

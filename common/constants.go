@@ -1,4 +1,4 @@
-package constants
+package common
 
 const (
 	//Oxford Dictionary API constants
@@ -29,4 +29,10 @@ const (
 	// collection we will store our
 	// word documents in
 	COLLECTION = "words"
+
+	// Application error messages
+
+	// ClientErrMessage is the generic error message
+	// for the client. Devs should check the log messages.
+	ClientErrMessage = "Oops! :( \nLooks like something went wrong."
 )
